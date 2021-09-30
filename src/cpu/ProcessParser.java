@@ -14,8 +14,10 @@ public class ProcessParser {
     Queue<ProcessSim> processQueue = new LinkedList<>();
 
     public void ProcessParse() {
-        // TODO: Remove hardcoding of data file name, allow user to enter file name
-        String fileName = "inputfile.txt";
+        // Receive data file name from user.  For testing, sample file is "inputfile.txt"
+        System.out.println("Enter input filename: ");
+        Scanner keyboard = new Scanner(System.in);
+        String fileName = keyboard.nextLine();
         try {
             File inputFile = new File(fileName);
             Scanner fileReader = new Scanner(inputFile);
@@ -34,8 +36,9 @@ public class ProcessParser {
                 processQueue.add(process);
             }
         } catch (FileNotFoundException e) {
-            System.out.println("An error occurred.");
+            System.out.println("An error occurred while opening data file.");
             e.printStackTrace();
+            System.exit(1);
         }
     }
 
