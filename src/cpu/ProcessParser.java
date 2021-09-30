@@ -2,8 +2,8 @@ package cpu;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Scanner;
 
 /**
@@ -11,7 +11,7 @@ import java.util.Scanner;
  * of each line, and then adds the ProcessSim objects into a list for other classes to access.
  */
 public class ProcessParser {
-    List<ProcessSim> processList = new ArrayList<>();
+    Queue<ProcessSim> processQueue = new LinkedList<>();
 
     public void ProcessParse() {
         // TODO: Remove hardcoding of data file name, allow user to enter file name
@@ -31,7 +31,7 @@ public class ProcessParser {
                 long serviceTime = Long.parseLong(splitData[2].trim());
                 int priority = Integer.parseInt(splitData[3].trim());
                 ProcessSim process = new ProcessSim(arrivalTime, processName, serviceTime, priority);
-                processList.add(process);
+                processQueue.add(process);
             }
         } catch (FileNotFoundException e) {
             System.out.println("An error occurred.");
@@ -40,9 +40,9 @@ public class ProcessParser {
     }
 
     // Create the list whenever another objects needs it
-    public List<ProcessSim> getProcessList()
+    public Queue<ProcessSim> getProcessQueue()
     {
         ProcessParse();
-        return processList;
+        return processQueue;
     }
 }

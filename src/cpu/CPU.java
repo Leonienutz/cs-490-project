@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Queue;
 
 import javax.swing.table.DefaultTableModel;
 
@@ -19,7 +20,9 @@ public class CPU extends Thread
 	private Date currentTime;
 	private String currentProcessName;
 	private int timeUnit;
-	
+	private ProcessSim currProcess;
+	private Queue<ProcessSim> processQ;
+
 	public CPU()
 	{
 		String[] processQueueTableHeaders = {"Process Name", "Service Time"};
@@ -46,8 +49,13 @@ public class CPU extends Thread
 					if (processQueueTableModel.getRowCount() > 0)
 					{
 						//set time variables and set processing to true
-						currentProcessName = processQueueTableModel.getValueAt(0, 0).toString();
-						currentProcessServiceTime = (int)processQueueTableModel.getValueAt(0, 1) * timeUnit;
+						//currentProcessName = processQueueTableModel.getValueAt(0, 0).toString();
+						//currentProcessServiceTime = (int)processQueueTableModel.getValueAt(0, 1) * timeUnit;
+
+						// current process is the head of the queue
+						currProcess = processQ.peek();
+						currentProcessName = currProcess.getProcessName();
+						currentProcessServiceTime = currProcess.getServiceTime() * timeUnit;
 						currentServiceTime = 0;
 						currentTime = new Date();
 						processQueueTableModel.removeRow(0);
@@ -62,16 +70,17 @@ public class CPU extends Thread
 				}
 				else
 				{
-					//create a temp time to subtract the old time from and add this to currentServiceTime
+					//create a temp time to subtract the old time from and add this to currentServiceTime. Set current process's service time to newly calculated temp time.
 					Date tempTime = new Date();
 					currentServiceTime = currentServiceTime + (tempTime.getTime() - currentTime.getTime());
 					currentTime = tempTime;
-					
+					currProcess.setServiceTime(currentServiceTime);
 					if (currentServiceTime >= currentProcessServiceTime)
 					{
-						//once currentServiceTime reaches currentProcessServiceTime, it is finished
+						//once currentServiceTime reaches currentProcessServiceTime, it is finished. Process Queue is popped
 						processing = false;
 						currentProcessName = "None";
+						processQ.poll();
 					}
 				}
 			}
@@ -173,5 +182,13 @@ public class CPU extends Thread
 	public void addActionListenerToProcessorQueue(ActionListener e)
 	{
 		actionListeners.add(e);
+	}
+
+	public void setCurrProcess(ProcessSim currProcess) {
+		this.currProcess = currProcess;
+	}
+
+	public void setProcessQueue(Queue<ProcessSim> processQ) {
+		this.processQ = processQ;
 	}
 }

@@ -26,13 +26,12 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 
 import javax.swing.JFormattedTextField;
 import javax.swing.JSeparator;
 import java.awt.Color;
-import java.util.List;
+import java.util.Queue;
 
 public class GUI
 {
@@ -75,8 +74,8 @@ public class GUI
 				try {
 					// Parse data file, create list of processes
 					ProcessParser parse = new ProcessParser();
-					List<ProcessSim> processList = new ArrayList<>();
-					processList = parse.getProcessList();
+					Queue<ProcessSim> processQueue;
+					processQueue = parse.getProcessQueue();
 
 					//create CPUs
 					CPU cpu1 = new CPU();
@@ -164,10 +163,11 @@ public class GUI
 					{
 						cpu1.pushProcessToQueue("test " + i, i * 10);
 					}*/
-					// Push process list processes to CPU1
-					for (int i = 0; i < processList.size(); i++)
-					{
-						cpu1.pushProcessToQueue(processList.get(i).getProcessName(), (int)processList.get(i).getServiceTime());
+
+					// Push process queue to CPU1.
+					cpu1.setProcessQueue(processQueue);
+					for (ProcessSim process : processQueue) {
+						cpu1.pushProcessToQueue(process.getProcessName(), (int) process.getServiceTime());
 					}
 					
 				} catch (Exception e) {

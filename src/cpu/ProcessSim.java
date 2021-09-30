@@ -9,7 +9,6 @@ import java.util.Date;
 public class ProcessSim {
     private long arrivalTime;
     private long serviceTime;
-    private Date currentTime = new Date();
     private String processName;
     private int priority;
 
@@ -21,16 +20,16 @@ public class ProcessSim {
         this.priority = priority;
     }
 
+    public void setServiceTime(long serviceTime) {
+        this.serviceTime = serviceTime;
+    }
+
     public long getArrivalTime() {
         return arrivalTime;
     }
 
     public long getServiceTime() {
         return serviceTime;
-    }
-
-    public Date getCurrentTime() {
-        return currentTime;
     }
 
     public String getProcessName() {
