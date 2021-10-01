@@ -16,9 +16,6 @@ public class ProcessParser {
     Queue<ProcessSim> processQueue = new LinkedList<>();
 
     public void ProcessParse() {
-        // Receive data file name from user.  For testing, sample file is "inputfile.txt"
-        /*System.out.println("Enter input filename: ");
-        Scanner keyboard = new Scanner(System.in);*/
     	System.out.println("Please select input file.");
         String fileName = "";
     	JFileChooser fileChooser = new JFileChooser(System.getProperty("user.dir"));

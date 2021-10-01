@@ -159,12 +159,6 @@ public class GUI
 						}
 						
 					});
-					
-					//add processes to CPU1
-					/*for (int i = 0; i < 50; i++)
-					{
-						cpu1.pushProcessToQueue("test " + i, i * 10);
-					}*/
 
 					// Push process queue to CPU1.
 					cpu1.setProcessQueue(processQueue);

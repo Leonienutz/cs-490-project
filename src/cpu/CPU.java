@@ -48,10 +48,6 @@ public class CPU extends Thread
 					//if not processing something, check for processes
 					if (processQueueTableModel.getRowCount() > 0)
 					{
-						//set time variables and set processing to true
-						//currentProcessName = processQueueTableModel.getValueAt(0, 0).toString();
-						//currentProcessServiceTime = (int)processQueueTableModel.getValueAt(0, 1) * timeUnit;
-
 						// current process is the head of the queue
 						currProcess = processQ.peek();
 						currentProcessName = currProcess.getProcessName();
