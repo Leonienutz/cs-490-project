@@ -6,6 +6,8 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Scanner;
 
+import javax.swing.JFileChooser;
+
 /**
  * The ProcessParser class reads in a formatted text file, creates ProcessSim objects per the parameters
  * of each line, and then adds the ProcessSim objects into a list for other classes to access.
@@ -15,9 +17,17 @@ public class ProcessParser {
 
     public void ProcessParse() {
         // Receive data file name from user.  For testing, sample file is "inputfile.txt"
-        System.out.println("Enter input filename: ");
-        Scanner keyboard = new Scanner(System.in);
-        String fileName = keyboard.nextLine();
+        /*System.out.println("Enter input filename: ");
+        Scanner keyboard = new Scanner(System.in);*/
+    	System.out.println("Please select input file.");
+        String fileName = "";
+    	JFileChooser fileChooser = new JFileChooser(System.getProperty("user.dir"));
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        int option = fileChooser.showOpenDialog(null);
+        if(option == JFileChooser.APPROVE_OPTION) {
+           fileName = fileChooser.getSelectedFile().getAbsolutePath();
+        }
+    	
         try {
             File inputFile = new File(fileName);
             Scanner fileReader = new Scanner(inputFile);
@@ -35,6 +45,8 @@ public class ProcessParser {
                 ProcessSim process = new ProcessSim(arrivalTime, processName, serviceTime, priority);
                 processQueue.add(process);
             }
+            
+            fileReader.close();
         } catch (FileNotFoundException e) {
             System.out.println("An error occurred while opening data file.");
             e.printStackTrace();

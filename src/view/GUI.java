@@ -68,11 +68,13 @@ public class GUI
 	/**
 	 * Launch the application.
 	 */
-	//test
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
+					//set look and feel for all windows
+					UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+					
 					// Parse data file, create list of processes
 					ProcessParser parse = new ProcessParser();
 					Queue<ProcessSim> processQueue;
@@ -84,7 +86,6 @@ public class GUI
 					
 					//create GUI
 					GUI window = new GUI(cpu1.getProcessQueueTableModel(), cpu2.getProcessQueueTableModel());
-					UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 					window.frmCsProject.setVisible(true);
 					
 					//create a timer to periodically update gui
