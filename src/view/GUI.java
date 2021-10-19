@@ -1,41 +1,34 @@
 package view;
 
-import java.awt.EventQueue;
-
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 
-import cpu.ProcessSim;
-import cpu.ProcessParser;
 import net.miginfocom.swing.MigLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextPane;
-import javax.swing.Timer;
-import javax.swing.UIManager;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.DefaultCaret;
-
-import cpu.CPU;
+import javax.swing.text.NumberFormatter;
 
 import javax.swing.JTextArea;
 import java.awt.Font;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import javax.swing.JFormattedTextField;
 import javax.swing.JSeparator;
 import java.awt.Color;
-import java.util.Queue;
 
-public class GUI
-{
-
+/**
+ * Class that contains a GUI for displaying CPU and process data.
+ */
+public class GUI {
+	private boolean systemState;
+	private int timeUnit = 100;
 	private JFrame frmCsProject;
 	private JButton startButton;
 	private JLabel unitLabel;
@@ -45,264 +38,197 @@ public class GUI
 	private JScrollPane processQueue1ScrollPane;
 	private JPanel cpu1Panel;
 	private JTextPane cpu1TextPane;
-	private JLabel processQueue2Label;
-	private JScrollPane processQueue2ScrollPane;
+	private JLabel statsTableLabel;
+	private JScrollPane statsScrollPane;
 	private JLabel cpu2Label;
 	private JPanel cpu2Panel;
 	private JTextPane cpu2TextPane;
 	private JButton stopButton;
 	private JLabel systemStateLabel;
-	private JSeparator separator2;
 	private JLabel systemLabel;
 	private JTextArea systemTextArea;
 	private JFormattedTextField unitTextField;
 	private JLabel unitLabel2;
-	
 	private JTable processQueue1Table;
 	private DefaultTableModel processQueue1TableModel;
-	private JTable processQueue2Table;
-	private DefaultTableModel processQueue2TableModel;
+	private JTable statsTable;
+	private DefaultTableModel statsTableModel;
 	private JScrollPane systemScrollPane;
-	private boolean systemState;
+	private JLabel currentTimeLabel;
+	private JLabel currentTimeString;
+	private JLabel throughputLabel;
+	private JLabel throughputValueLabel;
 
 	/**
-	 * Launch the application.
+	 * Constructor of the GUI.
+	 * @param processTable table model containing the data for the process table
+	 * @param statsTable table model containing the data for the stats table
 	 */
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					//set look and feel for all windows
-					UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-					
-					// Parse data file, create list of processes
-					ProcessParser parse = new ProcessParser();
-					Queue<ProcessSim> processQueue;
-					processQueue = parse.getProcessQueue();
-
-					//create CPUs
-					CPU cpu1 = new CPU();
-					CPU cpu2 = new CPU();
-					
-					//create GUI
-					GUI window = new GUI(cpu1.getProcessQueueTableModel(), cpu2.getProcessQueueTableModel());
-					window.frmCsProject.setVisible(true);
-					
-					//create a timer to periodically update gui
-					ActionListener updateProcessorText = new ActionListener() {
-
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							window.setCPUTextPane(cpu1.getCurrentProcessName(), cpu1.getCurrentProcessServiceTime() - cpu1.getCurrentServiceTime(), 1);
-							window.setCPUTextPane(cpu2.getCurrentProcessName(), cpu2.getCurrentProcessServiceTime() - cpu2.getCurrentServiceTime(), 2);
-						}
-						
-					};
-					new Timer(30, updateProcessorText).start();
-					
-					//add action listener to CPU1 and start
-					cpu1.addActionListenerToProcessorQueue(new ActionListener () {
-
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							if (e.getSource().toString().equals("pop"))
-							{
-								window.processPopped(e.getActionCommand(), 1);
-							}
-							else if (e.getSource().toString().equals("push"))
-							{
-								window.processPushed(e.getActionCommand(), 1);
-							}
-						}
-						
-					});
-					cpu1.start();
-					
-					//add action Listener to CPU2 and start
-					cpu2.addActionListenerToProcessorQueue(new ActionListener () {
-
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							if (e.getSource().toString().equals("pop"))
-							{
-								window.processPopped(e.getActionCommand(), 2);
-							}
-							else if (e.getSource().toString().equals("push"))
-							{
-								window.processPushed(e.getActionCommand(), 2);
-							}
-						}
-						
-					});
-					cpu2.start();
-					
-					//add action listener to start button
-					window.addStartButtonListener(new ActionListener() {
-
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							cpu1.setRunning(true);
-							cpu2.setRunning(true);
-							window.setSystemState(true);
-						}
-						
-					});
-					
-					//add action listener to stop button
-					window.addStopButtonListener(new ActionListener() {
-
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							cpu1.setRunning(false);
-							cpu2.setRunning(false);
-							window.setSystemState(false);
-						}
-						
-					});
-					
-					//add processes to CPU1
-					/*for (int i = 0; i < 50; i++)
-					{
-						cpu1.pushProcessToQueue("test " + i, i * 10);
-					}*/
-
-					// Push process queue to CPU1.
-					cpu1.setProcessQueue(processQueue);
-					for (ProcessSim process : processQueue) {
-						cpu1.pushProcessToQueue(process.getProcessName(), (int) process.getServiceTime());
-					}
-					
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
-
-	/**
-	 * Create the application.
-	 */
-	public GUI(DefaultTableModel cpu1, DefaultTableModel cpu2) {
-		processQueue1TableModel = cpu1;
-		processQueue2TableModel = cpu2;
+	public GUI(DefaultTableModel processTable, DefaultTableModel statsTable) {
+		processQueue1TableModel = processTable;
+		statsTableModel = statsTable;
 		initialize();
+		frmCsProject.setVisible(true);
 	}
 
 	/**
 	 * Initialize the contents of the frame.
 	 */
-	private void initialize()
-	{
+	private void initialize() {
+		//create the frame
 		frmCsProject = new JFrame();
 		frmCsProject.setTitle("CS 490 Project");
 		frmCsProject.setBounds(100, 100, 900, 600);
 		frmCsProject.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
+		//add a panel with a mig layout to the frame
 		JPanel panel = new JPanel();
 		frmCsProject.getContentPane().add(panel, BorderLayout.CENTER);
 		panel.setLayout(new MigLayout("", "[grow][100,grow]", "[][11.00][][150,grow][][150.00,grow][][][:150:150,grow]"));
 		
+		//add the start button the panel
 		startButton = new JButton("Start System");
 		startButton.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		panel.add(startButton, "flowx,cell 0 0");
 		
+		//add the time unit label to the panel
 		unitLabel = new JLabel("1 time unit = ");
 		unitLabel.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		panel.add(unitLabel, "flowx,cell 1 0");
 		
+		//add a separator between the buttons and the tables
 		separator1 = new JSeparator();
 		separator1.setForeground(Color.DARK_GRAY);
 		panel.add(separator1, "flowx,cell 0 1 2 1,growx");
 		
+		//add a label for the process queue table
 		processQueue1Label = new JLabel("Process Queue");
 		processQueue1Label.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		panel.add(processQueue1Label, "cell 0 2");
 		
+		//add a label for cpu 1
 		cpu1Label = new JLabel("CPU 1");
 		cpu1Label.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		panel.add(cpu1Label, "cell 1 2");
 		
+		//add a scroll pane for the process queue table
 		processQueue1ScrollPane = new JScrollPane();
 		panel.add(processQueue1ScrollPane, "cell 0 3,grow");
 		
+		//add the process queue table to its scroll pane
 		processQueue1Table = new JTable(processQueue1TableModel);
 		processQueue1Table.setFont(new Font("Tahoma", Font.PLAIN, 12));
 		processQueue1Table.setRowSelectionAllowed(false);
 		processQueue1ScrollPane.setViewportView(processQueue1Table);
 		
+		//create a panel for cpu 1
 		cpu1Panel = new JPanel();
 		panel.add(cpu1Panel, "cell 1 3,grow");
 		cpu1Panel.setLayout(new BorderLayout(0, 0));
 		
+		//add a text pane to cpu 1's panel to display data
 		cpu1TextPane = new JTextPane();
 		cpu1TextPane.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		cpu1TextPane.setText("CPU stuff");
 		cpu1Panel.add(cpu1TextPane);
 		
-		processQueue2Label = new JLabel("Process Queue");
-		processQueue2Label.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		panel.add(processQueue2Label, "cell 0 4");
+		//add a label for the stats table to the panel
+		statsTableLabel = new JLabel("Finished Processes");
+		statsTableLabel.setFont(new Font("Tahoma", Font.PLAIN, 14));
+		panel.add(statsTableLabel, "cell 0 4");
 		
-		processQueue2ScrollPane = new JScrollPane();
-		panel.add(processQueue2ScrollPane, "cell 0 5,grow");
+		//add scroll pane for the stats table to the panel
+		statsScrollPane = new JScrollPane();
+		panel.add(statsScrollPane, "cell 0 5,grow");
 		
-		processQueue2Table = new JTable(processQueue2TableModel);
-		processQueue2Table.setRowSelectionAllowed(false);
-		processQueue2Table.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		processQueue2ScrollPane.setViewportView(processQueue2Table);
+		//add the stats table to its scroll pane
+		statsTable = new JTable(statsTableModel);
+		statsTable.setRowSelectionAllowed(false);
+		statsTable.setFont(new Font("Tahoma", Font.PLAIN, 12));
+		statsScrollPane.setViewportView(statsTable);
 		
+		//add a label for cpu 2 to the panel
 		cpu2Label = new JLabel("CPU 2");
 		cpu2Label.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		panel.add(cpu2Label, "cell 1 4");
 		
+		//create a panel for cpu 2
 		cpu2Panel = new JPanel();
 		panel.add(cpu2Panel, "cell 1 5,grow");
 		cpu2Panel.setLayout(new BorderLayout(0, 0));
 		
+		//add a text pane to cpu 2's panel to display data 
 		cpu2TextPane = new JTextPane();
 		cpu2TextPane.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		cpu2TextPane.setText("More CPU stuff");
 		cpu2Panel.add(cpu2TextPane, BorderLayout.CENTER);
 		
+		//add a stop button to the panel
 		stopButton = new JButton("Stop System");
 		stopButton.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		panel.add(stopButton, "cell 0 0");
 		
+		//add a label to display the system's state to the panel
 		systemStateLabel = new JLabel("System State");
 		systemStateLabel.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		panel.add(systemStateLabel, "cell 0 0");
 		
-		separator2 = new JSeparator();
-		separator2.setForeground(Color.DARK_GRAY);
-		panel.add(separator2, "cell 0 6 2 1,growx");
+		//add a label for the throughput to the panel
+		throughputLabel = new JLabel("Current Throughput: ");
+		throughputLabel.setFont(new Font("Tahoma", Font.PLAIN, 14));
+		panel.add(throughputLabel, "flowx,cell 0 6");
 		
+		//add a label for the system output to the panel
 		systemLabel = new JLabel("System:");
 		systemLabel.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		panel.add(systemLabel, "cell 0 7");
 		
+		//add a label for the current system time to the panel
+		currentTimeLabel = new JLabel("Current System Time: ");
+		currentTimeLabel.setFont(new Font("Tahoma", Font.PLAIN, 14));
+		panel.add(currentTimeLabel, "flowx,cell 1 7");
+		
+		//add a scroll pane for the systems output to the panel
 		systemScrollPane = new JScrollPane();
 		panel.add(systemScrollPane, "cell 0 8 2 1,grow");
 		
+		//add a text area to display system output to its scroll pane
 		systemTextArea = new JTextArea();
 		((DefaultCaret)systemTextArea.getCaret()).setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 		systemScrollPane.setViewportView(systemTextArea);
 		
-		unitTextField = new JFormattedTextField();
+		//add a text field that only accepts integers greater than 1 for the time time unit to the panel
+	    NumberFormatter formatter = new NumberFormatter(NumberFormat.getInstance());
+	    formatter.setValueClass(Integer.class);
+	    formatter.setMinimum(1);
+	    formatter.setMaximum(Integer.MAX_VALUE);
+	    formatter.setAllowsInvalid(false);
+		unitTextField = new JFormattedTextField(formatter);
 		unitTextField.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		unitTextField.setText("100");
+		unitTextField.setValue((int)100);
 		panel.add(unitTextField, "cell 1 0");
 		
+		//add a label displaying the units of the time unit to the panel
 		unitLabel2 = new JLabel("ms");
 		unitLabel2.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		panel.add(unitLabel2, "cell 1 0");
+		
+		//add a label to contain the current time's value to the panel
+		currentTimeString = new JLabel("0");
+		currentTimeString.setFont(new Font("Tahoma", Font.PLAIN, 14));
+		panel.add(currentTimeString, "cell 1 7");
+		
+		//add a label to contain the current throughput value to the panel
+		throughputValueLabel = new JLabel("0");
+		throughputValueLabel.setFont(new Font("Tahoma", Font.PLAIN, 14));
+		panel.add(throughputValueLabel, "cell 0 6");
 	}
 	
 	/**
 	 * Adds an action listener to the start button.
 	 * @param e listener to be added
 	 */
-	public void addStartButtonListener(ActionListener e)
-	{
+	public void addStartButtonListener(ActionListener e) {
 		startButton.addActionListener(e);
 	}
 	
@@ -310,53 +236,18 @@ public class GUI
 	 * Adds an action listener to the stop button.
 	 * @param e listener to be added
 	 */
-	public void addStopButtonListener(ActionListener e)
-	{
+	public void addStopButtonListener(ActionListener e) {
 		stopButton.addActionListener(e);
 	}
 	
 	/**
-	 * Prints a message to the system text area displaying which process was pushed to which queue. Does nothing if queueNumber is not 1 or 2.
-	 * @param process
-	 * @param queueNumber 1 or 2
+	 * Prints a message to the system output with a timestamp at the beginning and new line character at the end.
+	 * @param systemTime time stamp
+	 * @param text message
 	 */
-	public void processPushed(String process, int queueNumber)
-	{
-		if (queueNumber == 1)
-		{
-			this.systemPrint("Added process: " + process + " to processing queue " + queueNumber + ".");
-		}
-		else if (queueNumber == 2)
-		{
-			this.systemPrint("Added process: " + process + " to processing queue " + queueNumber + ".");
-		}
-	}
-	
-	/**
-	 * Prints a message to the system text area displaying which process was popped from which queue. Does nothing if queueNumber is not 1 or 2.
-	 * @param queueNumber 1 or 2
-	 */
-	public void processPopped(String process, int queueNumber)
-	{
-		if (queueNumber == 1)
-		{
-			this.systemPrint("Removed process: " + process + " from processing queue " + queueNumber + ".");
-		}
-		else if (queueNumber == 2)
-		{
-			this.systemPrint("Removed process: " + process + " from processing queue " + queueNumber + ".");
-		}
-	}
-	
-	/**
-	 * Appends a line of text to the system text area with a time stamp at the beginning and a new line character
-	 * at the end.
-	 * @param text string to append
-	 */
-	public void systemPrint(String text)
-	{
-		SimpleDateFormat dateFormat = new SimpleDateFormat("hh:MM:ss");
-		systemTextArea.append(dateFormat.format(new Date()) + " << " + text + "\n");
+	public void systemPrint(long systemTime, String text) {
+		//SimpleDateFormat dateFormat = new SimpleDateFormat("hh:MM:ss");
+		systemTextArea.append(Math.round((double)systemTime / (double)timeUnit) + " << " + text + "\n");
 	}
 	
 	/**
@@ -365,15 +256,12 @@ public class GUI
 	 * @param timeRemaining time left to process (ms)
 	 * @param cpuNumber cpu 1 or 2
 	 */
-	public void setCPUTextPane(String process, long timeRemaining, int cpuNumber)
-	{
-		if (cpuNumber == 1)
-		{
-			cpu1TextPane.setText("Process: " + process + "\nTime Remaining (ms): " + timeRemaining);
+	public void setCPUTextPane(String process, long timeRemaining, int cpuNumber) {
+		if (cpuNumber == 1) {
+			cpu1TextPane.setText("Process: " + process + "\nTime Remaining (ms): " + Math.round((double)timeRemaining / (double)timeUnit));
 		}
-		else if (cpuNumber == 2)
-		{
-			cpu2TextPane.setText("Process: " + process + "\nTime Remaining (ms): " + timeRemaining);
+		else if (cpuNumber == 2) {
+			cpu2TextPane.setText("Process: " + process + "\nTime Remaining (ms): " + Math.round((double)timeRemaining / (double)timeUnit));
 		}
 	}
 	
@@ -381,17 +269,47 @@ public class GUI
 	 * Sets the system state variable and updates the system state text.
 	 * @param b system state: true for running, false for paused
 	 */
-	public void setSystemState(boolean b)
-	{
+	public void setSystemState(boolean b) {
 		systemState = b;
 		
-		if(systemState)
-		{
+		if(systemState) {
 			systemStateLabel.setText("System Running");
 		}
-		else
-		{
+		else {
 			systemStateLabel.setText("System Paused");
 		}
+	}
+	
+	/**
+	 * Gets the current amount (milliseconds) in the time unit text field.
+	 * @return milliseconds
+	 */
+	public int getTimeUnit() {
+		return (int) unitTextField.getValue();
+	}
+	
+	/**
+	 * Sets the time unit variable that will be used to create time stamps.
+	 * @param ms
+	 */
+	public void setTimeUnit(int ms) {
+		timeUnit = ms;
+	}
+	
+	/**
+	 * Sets the current system time that is displayed to the gui.
+	 * @param time
+	 */
+	public void setSystemTime(long time) {
+		currentTimeString.setText(String.valueOf((int)(time / timeUnit)));
+	}
+	
+	/**
+	 * Sets the throughput value displayed in the gui.
+	 * @param value
+	 */
+	public void setThroughputValue(double value) {
+		DecimalFormat formatter = new DecimalFormat("#.##");
+		throughputValueLabel.setText(formatter.format(value));
 	}
 }
