@@ -2,6 +2,7 @@ package cpu;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Scanner;
@@ -13,7 +14,7 @@ import javax.swing.JFileChooser;
  * of each line, and then adds the ProcessSim objects into a list for other classes to access.
  */
 public class ProcessParser {
-    Queue<ProcessSim> processQueue = new LinkedList<>();
+    ArrayList<ProcessSim> processQueue = new ArrayList<>();
 
     public void ProcessParse() {
     	System.out.println("Please select input file.");
@@ -52,7 +53,7 @@ public class ProcessParser {
     }
 
     // Create the list whenever another objects needs it
-    public Queue<ProcessSim> getProcessQueue()
+    public ArrayList<ProcessSim> getProcessQueue()
     {
         ProcessParse();
         return processQueue;
