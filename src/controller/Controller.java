@@ -102,15 +102,17 @@ public class Controller extends Thread {
 				Iterator<ProcessSim> processIterator = processesFromFile.iterator();
 				while (processIterator.hasNext()) {
 					ProcessSim process = processIterator.next();
+					// Display the queue of processes
 					boolean processAdded = false;
 					Vector<String> tableRow = new Vector<String>();
 					tableRow.add(process.getProcessName());
 					tableRow.add(String.valueOf(process.getServiceTime()));
-
+					// Process always gets added to empty table
 					if (processTable.getRowCount() == 0)
 					{
 						processTable.addRow(tableRow);
 					} else {
+						// if table is not empty, ensure process name is not already being displayed
 						for (int i = 0; i < processTable.getRowCount(); i++) {
 							if (processTable.getValueAt(i, 0).toString().equals(process.getProcessName())) {
 								processAdded = true;
