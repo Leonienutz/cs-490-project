@@ -70,7 +70,7 @@ public class Controller extends Thread {
 		finishedProcesses = new ArrayList<ProcessSim>();
 		
 		//create table models
-		processTable = new DefaultTableModel(new String[] {"Process Name", "Serevice Time"}, 0);
+		processTable = new DefaultTableModel(new String[] {"Process Name", "Service Time"}, 0);
 		statsTable = new DefaultTableModel(new String[] {"Process Name", "Arrival Time", "Service Time", "Finish Time", "TAT", "nTAT"}, 0);
 		
 		//create CPUs
@@ -102,16 +102,28 @@ public class Controller extends Thread {
 				Iterator<ProcessSim> processIterator = processesFromFile.iterator();
 				while (processIterator.hasNext()) {
 					ProcessSim process = processIterator.next();
+					boolean processAdded = false;
+					Vector<String> tableRow = new Vector<String>();
+					tableRow.add(process.getProcessName());
+					tableRow.add(String.valueOf(process.getServiceTime()));
+
+					if (processTable.getRowCount() == 0)
+					{
+						processTable.addRow(tableRow);
+					} else {
+						for (int i = 0; i < processTable.getRowCount(); i++) {
+							if (processTable.getValueAt(i, 0).toString().equals(process.getProcessName())) {
+								processAdded = true;
+							}
+						}
+						if (!processAdded) {
+							processTable.addRow(tableRow);
+						}
+					}
 					if ((process.getArrivalTime() * timeUnit) <= systemTime) {
 						//set the actual arrival time and add it to the arrived processes list
 						process.setActualArrivalTime(systemTime);
 						arrivedProcesses.add(process);
-						
-						//update the arrived processes table
-						Vector<String> tableRow = new Vector<String>();
-						tableRow.add(process.getProcessName());
-						tableRow.add(String.valueOf(process.getServiceTime()));
-						processTable.addRow(tableRow);
 						
 						//print a message in the gui and remove the process from the processes from file list
 						window.systemPrint(systemTime, process.getProcessName() + " added to process queue.");
@@ -129,11 +141,10 @@ public class Controller extends Thread {
 							cpu1.interrupt();
 						}
 						window.systemPrint(systemTime, process.getProcessName() + " loaded in cpu1.");
-						
+
 						if (!processTable.getDataVector().isEmpty()) {
 							processTable.getDataVector().remove(0);
 						}
-						
 					}
 				}
 				
