@@ -259,8 +259,8 @@ public class Controller extends Thread {
 				running = true;
 				lastTimeUpdate = System.currentTimeMillis();
 				systemTime = timeAtPause;
-				cpu1.setRunning(true, systemTime);
-				cpu2.setRunning(true, systemTime);
+				cpu1.setRunning(true);
+				cpu2.setRunning(true);
 			}
 			
 		});
@@ -274,8 +274,8 @@ public class Controller extends Thread {
 				window.setSystemState(false);
 				running = false;
 				timeAtPause = systemTime;
-				cpu1.setRunning(false, systemTime);
-				cpu2.setRunning(false, systemTime);
+				cpu1.setRunning(false);
+				cpu2.setRunning(false);
 			}
 			
 		});

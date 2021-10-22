@@ -17,7 +17,6 @@ public class CPU extends Thread {
 	private long currentProcessServiceTime;
 	private long lastTimeUpdate = 0;
 	private long timeAtPause = 0;
-	private long systemTime = 0;
 	private String currentProcessName;
 	private int timeUnit;
 	private ProcessSim currProcess;
@@ -43,6 +42,8 @@ public class CPU extends Thread {
 	public void run() {		
 		while (true) {
 			if (running) {
+				// if CPU was paused, restore service time to the time
+				// at it being paused.  toggle paused state.
 				if (paused)
 				{
 					currentServiceTime = timeAtPause;
@@ -88,7 +89,8 @@ public class CPU extends Thread {
 			}
 			else {
 				//yielding where a loop can potentially do nothing forever prevents the
-				//thread from using all processing resources
+				//thread from using all processing resources. Capture current service
+				//time and signal that the CPU has been paused.
 				timeAtPause = currentServiceTime;
 				paused = true;
 				Thread.yield();
@@ -110,9 +112,8 @@ public class CPU extends Thread {
 	 * @param b true to run, false to pause
 	 * @param st current system time
 	 */
-	public void setRunning(boolean b, long st) {
+	public void setRunning(boolean b) {
 		running = b;
-		systemTime = st;
 	}
 	
 	/**
