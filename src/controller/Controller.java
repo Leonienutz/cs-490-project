@@ -37,6 +37,7 @@ public class Controller extends Thread {
 	private int timeUnit = 100;
 	private long systemTime = 0;
 	private long lastTimeUpdate;
+	private long timeAtPause = 0;
 	private boolean running = false;
 	
 	/**
@@ -72,7 +73,12 @@ public class Controller extends Thread {
 		//create table models
 		processTable = new DefaultTableModel(new String[] {"Process Name", "Service Time"}, 0);
 		statsTable = new DefaultTableModel(new String[] {"Process Name", "Arrival Time", "Service Time", "Finish Time", "TAT", "nTAT"}, 0);
-		
+		for (ProcessSim process : processesFromFile) {
+			Vector<String> tableRow = new Vector<String>();
+			tableRow.add(process.getProcessName());
+			tableRow.add(String.valueOf(process.getServiceTime()));
+			processTable.addRow(tableRow);
+		}
 		//create CPUs
 		cpu1 = new CPU();
 		cpu1.start();
@@ -94,34 +100,12 @@ public class Controller extends Thread {
 		while (true) {
 			if (running) {
 				//update system clock
-				systemTime = systemTime + (System.currentTimeMillis() - lastTimeUpdate);
+				systemTime = systemTime + (System.currentTimeMillis()- lastTimeUpdate);
 				lastTimeUpdate = System.currentTimeMillis();
-
-				
 				//check process in the processes from file list to see if the have reached their arrival time
 				Iterator<ProcessSim> processIterator = processesFromFile.iterator();
 				while (processIterator.hasNext()) {
 					ProcessSim process = processIterator.next();
-					// Display the queue of processes
-					boolean processAdded = false;
-					Vector<String> tableRow = new Vector<String>();
-					tableRow.add(process.getProcessName());
-					tableRow.add(String.valueOf(process.getServiceTime()));
-					// Process always gets added to empty table
-					if (processTable.getRowCount() == 0)
-					{
-						processTable.addRow(tableRow);
-					} else {
-						// if table is not empty, ensure process name is not already being displayed
-						for (int i = 0; i < processTable.getRowCount(); i++) {
-							if (processTable.getValueAt(i, 0).toString().equals(process.getProcessName())) {
-								processAdded = true;
-							}
-						}
-						if (!processAdded) {
-							processTable.addRow(tableRow);
-						}
-					}
 					if ((process.getArrivalTime() * timeUnit) <= systemTime) {
 						//set the actual arrival time and add it to the arrived processes list
 						process.setActualArrivalTime(systemTime);
@@ -188,7 +172,7 @@ public class Controller extends Thread {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				//update gui elememts that are based on time
+				//update gui elements that are based on time
 				window.setCPUTextPane(cpu1.getCurrentProcessName(), cpu1.getCurrentProcessServiceTime() - cpu1.getCurrentServiceTime(), 1);
 				window.setCPUTextPane(cpu2.getCurrentProcessName(), cpu2.getCurrentProcessServiceTime() - cpu2.getCurrentServiceTime(), 2);
 				window.setSystemTime(systemTime);
@@ -276,6 +260,7 @@ public class Controller extends Thread {
 				window.setSystemState(true);
 				running = true;
 				lastTimeUpdate = System.currentTimeMillis();
+				systemTime = timeAtPause;
 			}
 			
 		});
@@ -290,6 +275,7 @@ public class Controller extends Thread {
 				cpu2.setRunning(false);
 				window.setSystemState(false);
 				running = false;
+				timeAtPause = systemTime;
 			}
 			
 		});

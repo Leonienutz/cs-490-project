@@ -35,7 +35,7 @@ public class CPU extends Thread {
 	
 	/**
 	 * Runs the CPU's main loop. The loop runs forever. If the current process is not null
-	 * then the CPU will increment a clock until the it reaches the processe's service time.
+	 * then the CPU will increment a clock until it reaches the process's service time.
 	 */
 	@Override
 	public void run() {		
@@ -58,11 +58,9 @@ public class CPU extends Thread {
 					}
 				}
 				else {
-					//create a temp time to subtract the old time from and add this to currentServiceTime. Set current process's service time to newly calculated temp time.
-					long temp = System.currentTimeMillis();
-					currentServiceTime = currentServiceTime + (temp - lastTimeUpdate);
-					lastTimeUpdate = temp;
-					
+					//subtract the old time from current time and add this to currentServiceTime. Set current process's service time to newly calculated time.
+					currentServiceTime = currentServiceTime + (System.currentTimeMillis() - lastTimeUpdate);
+					lastTimeUpdate = System.currentTimeMillis();
 					currProcess.setActualServiceTime(currentServiceTime);
 					if (currentServiceTime >= currentProcessServiceTime) {
 						//once currentServiceTime reaches currentProcessServiceTime, it is finished. Process Queue is popped
@@ -111,7 +109,7 @@ public class CPU extends Thread {
 	public boolean getProcessing() {
 		return processing;
 	}
-	
+
 	/**
 	 * Gets the current process name.
 	 * @return current process name or "None"
