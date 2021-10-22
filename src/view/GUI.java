@@ -10,6 +10,8 @@ import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextPane;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.NumberFormatter;
@@ -62,11 +64,31 @@ public class GUI {
 	/**
 	 * Constructor of the GUI.
 	 * @param processTable table model containing the data for the process table
-	 * @param statsTable table model containing the data for the stats table
+	 * @param statsModel table model containing the data for the stats table
 	 */
-	public GUI(DefaultTableModel processTable, DefaultTableModel statsTable) {
+	public GUI(DefaultTableModel processTable, DefaultTableModel statsModel) {
 		processQueue1TableModel = processTable;
-		statsTableModel = statsTable;
+		processQueue1TableModel.addTableModelListener(new TableModelListener () {
+
+			@Override
+			public void tableChanged(TableModelEvent e) {
+				//revalidate the table any time the table model is change so it is not laggy
+				processQueue1Table.revalidate();
+			}
+			
+		});
+		
+		statsTableModel = statsModel;
+		statsTableModel.addTableModelListener(new TableModelListener () {
+
+			@Override
+			public void tableChanged(TableModelEvent e) {
+				//revalidate the table any time the table model is change so it is not laggy
+				statsTable.revalidate();
+			}
+			
+		});
+		
 		initialize();
 		frmCsProject.setVisible(true);
 	}

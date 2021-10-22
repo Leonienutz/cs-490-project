@@ -69,10 +69,11 @@ public class Controller extends Thread {
 		finishedProcesses = new ArrayList<ProcessSim>();
 		
 		//create table models
-		processTable = new DefaultTableModel(new String[] {"Process Name", "Service Time"}, 0);
+		processTable = new DefaultTableModel(new String[] {"Arrival Time", "Process Name", "Service Time"}, 0);
 		statsTable = new DefaultTableModel(new String[] {"Process Name", "Arrival Time", "Service Time", "Finish Time", "TAT", "nTAT"}, 0);
 		for (ProcessSim process : processesFromFile) {
 			Vector<String> tableRow = new Vector<String>();
+			tableRow.add(String.valueOf(process.getArrivalTime()));
 			tableRow.add(process.getProcessName());
 			tableRow.add(String.valueOf(process.getServiceTime()));
 			processTable.addRow(tableRow);
@@ -146,8 +147,8 @@ public class Controller extends Thread {
 						}
 						window.systemPrint(systemClock.getCurrentTime(), arrivedProcesses.poll().getProcessName() + " loaded in cpu2.");
 
-						if (!processTable.getDataVector().isEmpty()) {
-							processTable.getDataVector().remove(0);
+						if (processTable.getRowCount() > 0) {
+							processTable.removeRow(0);
 						}
 					}
 				}
