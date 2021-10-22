@@ -251,16 +251,18 @@ public class Controller extends Thread {
 			public void actionPerformed(ActionEvent e) {
 				//when the start button is pressed change all running flags to true
 				//and get the time unit from the gui
-				timeUnit = window.getTimeUnit();
-				window.setTimeUnit(timeUnit);
-				cpu1.setTimeUnit(timeUnit);
-				cpu2.setTimeUnit(timeUnit);
-				window.setSystemState(true);
-				running = true;
-				lastTimeUpdate = System.currentTimeMillis();
-				systemTime = timeAtPause;
-				cpu1.setRunning(true);
-				cpu2.setRunning(true);
+				if (!running) {
+					timeUnit = window.getTimeUnit();
+					window.setTimeUnit(timeUnit);
+					cpu1.setTimeUnit(timeUnit);
+					cpu2.setTimeUnit(timeUnit);
+					window.setSystemState(true);
+					running = true;
+					lastTimeUpdate = System.currentTimeMillis();
+					systemTime = timeAtPause;
+					cpu1.setRunning(true);
+					cpu2.setRunning(true);
+				}
 			}
 			
 		});
