@@ -280,10 +280,10 @@ public class GUI {
 	 */
 	public void setCPUTextPane(String process, long timeRemaining, int cpuNumber) {
 		if (cpuNumber == 1) {
-			cpu1TextPane.setText("Process: " + process + "\nTime Remaining (ms): " + Math.round((double)timeRemaining / (double)timeUnit));
+			cpu1TextPane.setText("Process: " + process + "\nTime Remaining: " + Math.round((double)timeRemaining / (double)timeUnit));
 		}
 		else if (cpuNumber == 2) {
-			cpu2TextPane.setText("Process: " + process + "\nTime Remaining (ms): " + Math.round((double)timeRemaining / (double)timeUnit));
+			cpu2TextPane.setText("Process: " + process + "\nTime Remaining: " + Math.round((double)timeRemaining / (double)timeUnit));
 		}
 	}
 	
