@@ -16,10 +16,12 @@ public class CPU extends Thread {
 	private long currentServiceTime;
 	private long currentProcessServiceTime;
 	private long lastTimeUpdate = 0;
+	private long timeAtPause = 0;
 	private long systemTime = 0;
 	private String currentProcessName;
 	private int timeUnit;
 	private ProcessSim currProcess;
+	boolean paused = false;
 	/**
 	 * Constructor for the CPU.
 	 */
@@ -41,6 +43,12 @@ public class CPU extends Thread {
 	public void run() {		
 		while (true) {
 			if (running) {
+				if (paused)
+				{
+					currentServiceTime = timeAtPause;
+					lastTimeUpdate = System.currentTimeMillis();
+					paused = false;
+				}
 				if (!processing) {
 					//if not processing something, check for processes
 					if (currProcess != null) {
@@ -81,6 +89,8 @@ public class CPU extends Thread {
 			else {
 				//yielding where a loop can potentially do nothing forever prevents the
 				//thread from using all processing resources
+				timeAtPause = currentServiceTime;
+				paused = true;
 				Thread.yield();
 			}
 		}
