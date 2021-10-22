@@ -16,10 +16,10 @@ public class CPU extends Thread {
 	private long currentServiceTime;
 	private long currentProcessServiceTime;
 	private long lastTimeUpdate = 0;
+	private long systemTime = 0;
 	private String currentProcessName;
 	private int timeUnit;
 	private ProcessSim currProcess;
-
 	/**
 	 * Constructor for the CPU.
 	 */
@@ -58,9 +58,10 @@ public class CPU extends Thread {
 					}
 				}
 				else {
-					//subtract the old time from current time and add this to currentServiceTime. Set current process's service time to newly calculated time.
-					currentServiceTime = currentServiceTime + (System.currentTimeMillis() - lastTimeUpdate);
-					lastTimeUpdate = System.currentTimeMillis();
+					//create a temp time to subtract the old time from and add this to currentServiceTime. Set current process's service time to newly calculated temp time.
+					long temp = System.currentTimeMillis();
+					currentServiceTime = currentServiceTime + (temp - lastTimeUpdate);
+					lastTimeUpdate = temp;
 					currProcess.setActualServiceTime(currentServiceTime);
 					if (currentServiceTime >= currentProcessServiceTime) {
 						//once currentServiceTime reaches currentProcessServiceTime, it is finished. Process Queue is popped
@@ -79,7 +80,7 @@ public class CPU extends Thread {
 			}
 			else {
 				//yielding where a loop can potentially do nothing forever prevents the
-				//thread from using all processing resources 
+				//thread from using all processing resources
 				Thread.yield();
 			}
 		}
@@ -97,9 +98,11 @@ public class CPU extends Thread {
 	/**
 	 * Sets the running state of the processor. Setting this to false will pause the processor and preserve any variables.
 	 * @param b true to run, false to pause
+	 * @param st current system time
 	 */
-	public void setRunning(boolean b) {
+	public void setRunning(boolean b, long st) {
 		running = b;
+		systemTime = st;
 	}
 	
 	/**

@@ -255,12 +255,12 @@ public class Controller extends Thread {
 				window.setTimeUnit(timeUnit);
 				cpu1.setTimeUnit(timeUnit);
 				cpu2.setTimeUnit(timeUnit);
-				cpu1.setRunning(true);
-				cpu2.setRunning(true);
 				window.setSystemState(true);
 				running = true;
 				lastTimeUpdate = System.currentTimeMillis();
 				systemTime = timeAtPause;
+				cpu1.setRunning(true, systemTime);
+				cpu2.setRunning(true, systemTime);
 			}
 			
 		});
@@ -271,11 +271,11 @@ public class Controller extends Thread {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				//when the stop button is pressed set all running flags to false
-				cpu1.setRunning(false);
-				cpu2.setRunning(false);
 				window.setSystemState(false);
 				running = false;
 				timeAtPause = systemTime;
+				cpu1.setRunning(false, systemTime);
+				cpu2.setRunning(false, systemTime);
 			}
 			
 		});
