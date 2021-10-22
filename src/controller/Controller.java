@@ -35,9 +35,7 @@ public class Controller extends Thread {
 	private DefaultTableModel processTable;
 	private DefaultTableModel statsTable;
 	private int timeUnit = 100;
-	private long systemTime = 0;
-	private long lastTimeUpdate;
-	private long timeAtPause = 0;
+	private ClockSim systemClock;
 	private boolean running = false;
 	
 	/**
@@ -79,10 +77,14 @@ public class Controller extends Thread {
 			tableRow.add(String.valueOf(process.getServiceTime()));
 			processTable.addRow(tableRow);
 		}
+		
+		//create clock
+		systemClock = new ClockSim();
+		
 		//create CPUs
-		cpu1 = new CPU();
+		cpu1 = new CPU(systemClock);
 		cpu1.start();
-		cpu2 = new CPU();
+		cpu2 = new CPU(systemClock);
 		cpu2.start();
 		
 		//create GUI
@@ -100,19 +102,19 @@ public class Controller extends Thread {
 		while (true) {
 			if (running) {
 				//update system clock
-				systemTime = systemTime + (System.currentTimeMillis()- lastTimeUpdate);
-				lastTimeUpdate = System.currentTimeMillis();
+				systemClock.updateClock();
+				
 				//check process in the processes from file list to see if the have reached their arrival time
 				Iterator<ProcessSim> processIterator = processesFromFile.iterator();
 				while (processIterator.hasNext()) {
 					ProcessSim process = processIterator.next();
-					if ((process.getArrivalTime() * timeUnit) <= systemTime) {
+					if ((process.getArrivalTime() * timeUnit) <= systemClock.getCurrentTime()) {
 						//set the actual arrival time and add it to the arrived processes list
-						process.setActualArrivalTime(systemTime);
+						process.setActualArrivalTime(systemClock.getCurrentTime());
 						arrivedProcesses.add(process);
 						
 						//print a message in the gui and remove the process from the processes from file list
-						window.systemPrint(systemTime, process.getProcessName() + " added to process queue.");
+						window.systemPrint(systemClock.getCurrentTime(), process.getProcessName() + " added to process queue.");
 						processIterator.remove();
 					}
 				}
@@ -126,7 +128,7 @@ public class Controller extends Thread {
 						if (cpu1.getState().equals(Thread.State.TIMED_WAITING)) {
 							cpu1.interrupt();
 						}
-						window.systemPrint(systemTime, process.getProcessName() + " loaded in cpu1.");
+						window.systemPrint(systemClock.getCurrentTime(), process.getProcessName() + " loaded in cpu1.");
 
 						if (!processTable.getDataVector().isEmpty()) {
 							processTable.getDataVector().remove(0);
@@ -142,7 +144,7 @@ public class Controller extends Thread {
 						if (cpu2.getState().equals(Thread.State.TIMED_WAITING)) {
 							cpu2.interrupt();
 						}
-						window.systemPrint(systemTime, arrivedProcesses.poll().getProcessName() + " loaded in cpu2.");
+						window.systemPrint(systemClock.getCurrentTime(), arrivedProcesses.poll().getProcessName() + " loaded in cpu2.");
 
 						if (!processTable.getDataVector().isEmpty()) {
 							processTable.getDataVector().remove(0);
@@ -175,8 +177,8 @@ public class Controller extends Thread {
 				//update gui elements that are based on time
 				window.setCPUTextPane(cpu1.getCurrentProcessName(), cpu1.getCurrentProcessServiceTime() - cpu1.getCurrentServiceTime(), 1);
 				window.setCPUTextPane(cpu2.getCurrentProcessName(), cpu2.getCurrentProcessServiceTime() - cpu2.getCurrentServiceTime(), 2);
-				window.setSystemTime(systemTime);
-				window.setThroughputValue((double)statsTable.getRowCount() / (double)Math.round((double)systemTime / (double)timeUnit));
+				window.setSystemTime(systemClock.getCurrentTime());
+				window.setThroughputValue((double)statsTable.getRowCount() / (double)Math.round((double)systemClock.getCurrentTime() / (double)timeUnit));
 			}
 			
 		};
@@ -190,7 +192,7 @@ public class Controller extends Thread {
 				if (e.getActionCommand().equals("finished")) {
 					//get the finished process and set its finished time
 					ProcessSim finishedProcess = (ProcessSim)e.getSource();
-					finishedProcess.setActualFinishTime(systemTime);
+					//finishedProcess.setActualFinishTime(systemClock.getCurrentTime());
 					finishedProcess.setTat(finishedProcess.getActualFinishTime() - finishedProcess.getActualArrivalTime());
 					finishedProcess.setNtat((double)Math.round((double)finishedProcess.getTat() / (double)timeUnit) / (double)Math.round((double)finishedProcess.getActualServiceTime() / (double)timeUnit));
 					
@@ -206,7 +208,7 @@ public class Controller extends Thread {
 					statsTable.addRow(tableRow);
 					
 					//print message in gui and add process to finished process list
-					window.systemPrint(systemTime, finishedProcess.getProcessName() + " finished in processor 1.");
+					window.systemPrint(systemClock.getCurrentTime(), finishedProcess.getProcessName() + " finished in processor 1.");
 					finishedProcesses.add(finishedProcess);
 				}
 			}
@@ -221,7 +223,7 @@ public class Controller extends Thread {
 				if (e.getActionCommand().equals("finished")) {
 					//get the finished process and set its finished time, tat, and ntat
 					ProcessSim finishedProcess = (ProcessSim)e.getSource();
-					finishedProcess.setActualFinishTime(systemTime);
+					//finishedProcess.setActualFinishTime(systemClock.getCurrentTime());
 					finishedProcess.setTat(finishedProcess.getActualFinishTime() - finishedProcess.getActualArrivalTime());
 					finishedProcess.setNtat((double)Math.round((double)finishedProcess.getTat() / (double)timeUnit) / (double)Math.round((double)finishedProcess.getActualServiceTime() / (double)timeUnit));
 					
@@ -237,7 +239,7 @@ public class Controller extends Thread {
 					statsTable.addRow(tableRow);
 					
 					//print message in gui and add process to finished process list
-					window.systemPrint(systemTime, finishedProcess.getProcessName() + " finished in processor 2.");
+					window.systemPrint(systemClock.getCurrentTime(), finishedProcess.getProcessName() + " finished in processor 2.");
 					finishedProcesses.add(finishedProcess);
 				}
 			}
@@ -258,8 +260,7 @@ public class Controller extends Thread {
 					cpu2.setTimeUnit(timeUnit);
 					window.setSystemState(true);
 					running = true;
-					lastTimeUpdate = System.currentTimeMillis();
-					systemTime = timeAtPause;
+					systemClock.resumeClock();
 					cpu1.setRunning(true);
 					cpu2.setRunning(true);
 				}
@@ -275,7 +276,7 @@ public class Controller extends Thread {
 				//when the stop button is pressed set all running flags to false
 				window.setSystemState(false);
 				running = false;
-				timeAtPause = systemTime;
+				systemClock.pauseClock();
 				cpu1.setRunning(false);
 				cpu2.setRunning(false);
 			}

@@ -3,7 +3,7 @@ package cpu;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Date;
+import controller.ClockSim;
 
 /**
  * Class representing a CPU. The CPU can be passed a process which is
@@ -16,15 +16,15 @@ public class CPU extends Thread {
 	private long currentServiceTime;
 	private long currentProcessServiceTime;
 	private long lastTimeUpdate = 0;
-	private long timeAtPause = 0;
+	private ClockSim systemClock;
 	private String currentProcessName;
 	private int timeUnit;
 	private ProcessSim currProcess;
-	boolean paused = false;
+	
 	/**
 	 * Constructor for the CPU.
 	 */
-	public CPU() {
+	public CPU(ClockSim clock) {
 		running = false;
 		processing = false;
 		actionListeners = new ArrayList<ActionListener>();
@@ -32,6 +32,7 @@ public class CPU extends Thread {
 		currentProcessName = "None";
 		currentProcessServiceTime = 0;
 		timeUnit = 100;
+		systemClock = clock;
 	}
 	
 	/**
@@ -42,14 +43,7 @@ public class CPU extends Thread {
 	public void run() {		
 		while (true) {
 			if (running) {
-				// if CPU was paused, restore service time to the time
-				// at it being paused.  toggle paused state.
-				if (paused)
-				{
-					currentServiceTime = timeAtPause;
-					lastTimeUpdate = System.currentTimeMillis();
-					paused = false;
-				}
+				//System.out.println("test");
 				if (!processing) {
 					//if not processing something, check for processes
 					if (currProcess != null) {
@@ -57,7 +51,7 @@ public class CPU extends Thread {
 						currentProcessName = currProcess.getProcessName();
 						currentProcessServiceTime = currProcess.getServiceTime() * timeUnit;
 						currentServiceTime = 0;
-						lastTimeUpdate = System.currentTimeMillis();
+						lastTimeUpdate = systemClock.getCurrentTime();
 						processing = true;
 					}
 					else {
@@ -68,7 +62,7 @@ public class CPU extends Thread {
 				}
 				else {
 					//create a temp time to subtract the old time from and add this to currentServiceTime. Set current process's service time to newly calculated temp time.
-					long temp = System.currentTimeMillis();
+					long temp = systemClock.getCurrentTime();
 					currentServiceTime = currentServiceTime + (temp - lastTimeUpdate);
 					lastTimeUpdate = temp;
 					currProcess.setActualServiceTime(currentServiceTime);
@@ -76,6 +70,7 @@ public class CPU extends Thread {
 						//once currentServiceTime reaches currentProcessServiceTime, it is finished. Process Queue is popped
 						processing = false;
 						currentProcessName = "None";
+						currProcess.setActualFinishTime(temp);
 						
 						//notify listeners that a process was finished
 						for (ActionListener listener : actionListeners) {
@@ -86,13 +81,14 @@ public class CPU extends Thread {
 						currProcess = null;
 					}
 				}
+				//yielding where a loop can potentially do nothing forever prevents the
+				//thread from using all processing resources 
+				Thread.yield();
 			}
 			else {
 				//yielding where a loop can potentially do nothing forever prevents the
 				//thread from using all processing resources. Capture current service
 				//time and signal that the CPU has been paused.
-				timeAtPause = currentServiceTime;
-				paused = true;
 				Thread.yield();
 			}
 		}

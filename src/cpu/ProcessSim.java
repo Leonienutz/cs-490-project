@@ -1,7 +1,5 @@
 package cpu;
 
-import java.util.Date;
-
 /**
  * The ProcessSim class provides the template for the ProcessSim object and its associated functions.
  */
