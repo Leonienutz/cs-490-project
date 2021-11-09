@@ -32,8 +32,10 @@ public class Controller extends Thread {
 	private ArrayList<ProcessSim> processesFromFile;
 	private Queue<ProcessSim> arrivedProcesses;
 	private ArrayList<ProcessSim> finishedProcesses;
-	private DefaultTableModel processTable;
-	private DefaultTableModel statsTable;
+	private DefaultTableModel processTable1;
+	private DefaultTableModel statsTable1;
+	private DefaultTableModel processTable2;
+	private DefaultTableModel statsTable2;
 	private int timeUnit = 100;
 	private ClockSim systemClock;
 	private boolean running = false;
@@ -69,14 +71,16 @@ public class Controller extends Thread {
 		finishedProcesses = new ArrayList<ProcessSim>();
 		
 		//create table models
-		processTable = new DefaultTableModel(new String[] {"Arrival Time", "Process Name", "Service Time"}, 0);
-		statsTable = new DefaultTableModel(new String[] {"Process Name", "Arrival Time", "Service Time", "Finish Time", "TAT", "nTAT"}, 0);
+		processTable1 = new DefaultTableModel(new String[] {"Arrival Time", "Process Name", "Service Time"}, 0);
+		statsTable1 = new DefaultTableModel(new String[] {"Process Name", "Arrival Time", "Service Time", "Finish Time", "TAT", "nTAT"}, 0);
+		processTable2 = new DefaultTableModel(new String[] {"Arrival Time", "Process Name", "Service Time"}, 0);
+		statsTable2 = new DefaultTableModel(new String[] {"Process Name", "Arrival Time", "Service Time", "Finish Time", "TAT", "nTAT"}, 0);
 		for (ProcessSim process : processesFromFile) {
 			Vector<String> tableRow = new Vector<String>();
 			tableRow.add(String.valueOf(process.getArrivalTime()));
 			tableRow.add(process.getProcessName());
 			tableRow.add(String.valueOf(process.getServiceTime()));
-			processTable.addRow(tableRow);
+			processTable1.addRow(tableRow);
 		}
 		
 		//create clock
@@ -89,7 +93,7 @@ public class Controller extends Thread {
 		cpu2.start();
 		
 		//create GUI
-		window = new GUI(processTable, statsTable);
+		window = new GUI(processTable1, statsTable1, processTable2, statsTable2);
 		this.initializeActionListeners();
 	}
 	
@@ -131,8 +135,8 @@ public class Controller extends Thread {
 						}
 						window.systemPrint(systemClock.getCurrentTime(), process.getProcessName() + " loaded in cpu1.");
 
-						if (!processTable.getDataVector().isEmpty()) {
-							processTable.getDataVector().remove(0);
+						if (!processTable1.getDataVector().isEmpty()) {
+							processTable1.getDataVector().remove(0);
 						}
 					}
 				}
@@ -147,8 +151,8 @@ public class Controller extends Thread {
 						}
 						window.systemPrint(systemClock.getCurrentTime(), arrivedProcesses.poll().getProcessName() + " loaded in cpu2.");
 
-						if (processTable.getRowCount() > 0) {
-							processTable.removeRow(0);
+						if (processTable1.getRowCount() > 0) {
+							processTable1.removeRow(0);
 						}
 					}
 				}
@@ -179,7 +183,8 @@ public class Controller extends Thread {
 				window.setCPUTextPane(cpu1.getCurrentProcessName(), cpu1.getCurrentProcessServiceTime() - cpu1.getCurrentServiceTime(), 1);
 				window.setCPUTextPane(cpu2.getCurrentProcessName(), cpu2.getCurrentProcessServiceTime() - cpu2.getCurrentServiceTime(), 2);
 				window.setSystemTime(systemClock.getCurrentTime());
-				window.setThroughputValue((double)statsTable.getRowCount() / (double)Math.round((double)systemClock.getCurrentTime() / (double)timeUnit));
+				//should change this to calculate current average nTAT for each processor
+				//window.setThroughputValue((double)statsTable1.getRowCount() / (double)Math.round((double)systemClock.getCurrentTime() / (double)timeUnit));
 			}
 			
 		};
@@ -206,7 +211,7 @@ public class Controller extends Thread {
 					tableRow.add(String.valueOf(Math.round((double)finishedProcess.getActualFinishTime() / (double)timeUnit)));
 					tableRow.add(String.valueOf(Math.round((double)finishedProcess.getTat() / (double)timeUnit)));
 					tableRow.add(formatter.format(finishedProcess.getNtat()));
-					statsTable.addRow(tableRow);
+					statsTable1.addRow(tableRow);
 					
 					//print message in gui and add process to finished process list
 					window.systemPrint(systemClock.getCurrentTime(), finishedProcess.getProcessName() + " finished in processor 1.");
@@ -237,7 +242,7 @@ public class Controller extends Thread {
 					tableRow.add(String.valueOf(Math.round((double)finishedProcess.getActualFinishTime() / (double)timeUnit)));
 					tableRow.add(String.valueOf(Math.round((double)finishedProcess.getTat() / (double)timeUnit)));
 					tableRow.add(formatter.format(finishedProcess.getNtat()));
-					statsTable.addRow(tableRow);
+					statsTable1.addRow(tableRow);
 					
 					//print message in gui and add process to finished process list
 					window.systemPrint(systemClock.getCurrentTime(), finishedProcess.getProcessName() + " finished in processor 2.");
