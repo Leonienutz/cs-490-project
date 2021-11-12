@@ -128,7 +128,7 @@ public class Controller extends Thread {
 				//pass cpu1 a process and wake it if it is sleeping. Update the process queue table.
 				if (!arrivedProcesses.isEmpty()) {
 					if (cpu1.getCurrProcess() == null) {
-						ProcessSim process = arrivedProcesses.poll();
+						ProcessSim process = HRRN();
 						cpu1.setCurrProcess(process);
 						if (cpu1.getState().equals(Thread.State.TIMED_WAITING)) {
 							cpu1.interrupt();
@@ -143,7 +143,7 @@ public class Controller extends Thread {
 				
 				//if there are processes in the arrived queue and cpu2 does not have a process,
 				//pass cpu2 a process and wake it if it is sleeping. Update the process queue table.
-				if (!arrivedProcesses.isEmpty()) {
+				/*if (!arrivedProcesses.isEmpty()) {
 					if (cpu2.getCurrProcess() == null) {
 						cpu2.setCurrProcess(arrivedProcesses.peek());
 						if (cpu2.getState().equals(Thread.State.TIMED_WAITING)) {
@@ -155,7 +155,7 @@ public class Controller extends Thread {
 							processTable1.removeRow(0);
 						}
 					}
-				}
+				}*/
 				
 				//yielding where a loop can potentially do nothing forever prevents the
 				//thread from using all processing resources 
@@ -288,5 +288,30 @@ public class Controller extends Thread {
 			}
 			
 		});
+	}
+
+	/**
+	 * Iterates over list of processes, calculates response ratio for each process
+	 * Returns the process with the highest response ratio.
+	 * Response ratio is calculated as (current time - waiting time) + service time
+	 * all divided by service time.
+	 * @return next process to be executed
+	 */
+	private ProcessSim HRRN() {
+		long currentTime = systemClock.getCurrentTime();
+		float responseRatio = 0.0f;
+		ProcessSim nextProcess = arrivedProcesses.peek();
+		for (ProcessSim process : arrivedProcesses){
+			float waitingTime = currentTime - process.getArrivalTime() * timeUnit;
+			float temp;
+			temp = responseRatio;
+			responseRatio = (waitingTime + process.getServiceTime()) / process.getServiceTime();
+			if (responseRatio > temp) {
+				nextProcess = process;
+			}
+		}
+		arrivedProcesses.remove(nextProcess);
+
+		return nextProcess;
 	}
 }
