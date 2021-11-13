@@ -28,10 +28,14 @@ public class Controller extends Thread {
 	private CPU cpu1;
 	private CPU cpu2;
 	private GUI window;
-	private ProcessParser parse;
-	private ArrayList<ProcessSim> processesFromFile;
-	private Queue<ProcessSim> arrivedProcesses;
-	private ArrayList<ProcessSim> finishedProcesses;
+	private ProcessParser parse1;
+	private ArrayList<ProcessSim> processesFromFileForCPU1;
+	private Queue<ProcessSim> arrivedProcessesForCPU1;
+	private ArrayList<ProcessSim> finishedProcessesForCPU1;
+	private ProcessParser parse2;
+	private ArrayList<ProcessSim> processesFromFileForCPU2;
+	private Queue<ProcessSim> arrivedProcessesForCPU2;
+	private ArrayList<ProcessSim> finishedProcessesForCPU2;
 	private DefaultTableModel processTable1;
 	private DefaultTableModel statsTable1;
 	private DefaultTableModel processTable2;
@@ -65,24 +69,35 @@ public class Controller extends Thread {
 	 */
 	public Controller() {
 		//create process queues
-		parse = new ProcessParser();
-		processesFromFile = parse.getProcessQueue();
-		arrivedProcesses = new LinkedList<>();
-		finishedProcesses = new ArrayList<ProcessSim>();
+		parse1 = new ProcessParser();
+		processesFromFileForCPU1 = parse1.getProcessQueue();
+		arrivedProcessesForCPU1 = new LinkedList<>();
+		finishedProcessesForCPU1 = new ArrayList<ProcessSim>();
+
+		parse2 = new ProcessParser();
+		processesFromFileForCPU2 = parse2.getProcessQueue();
+		arrivedProcessesForCPU2 = new LinkedList<>();
+		finishedProcessesForCPU2 = new ArrayList<ProcessSim>();
 		
 		//create table models
 		processTable1 = new DefaultTableModel(new String[] {"Arrival Time", "Process Name", "Service Time"}, 0);
 		statsTable1 = new DefaultTableModel(new String[] {"Process Name", "Arrival Time", "Service Time", "Finish Time", "TAT", "nTAT"}, 0);
 		processTable2 = new DefaultTableModel(new String[] {"Arrival Time", "Process Name", "Service Time"}, 0);
 		statsTable2 = new DefaultTableModel(new String[] {"Process Name", "Arrival Time", "Service Time", "Finish Time", "TAT", "nTAT"}, 0);
-		for (ProcessSim process : processesFromFile) {
+		for (ProcessSim process : processesFromFileForCPU1) {
 			Vector<String> tableRow = new Vector<String>();
 			tableRow.add(String.valueOf(process.getArrivalTime()));
 			tableRow.add(process.getProcessName());
 			tableRow.add(String.valueOf(process.getServiceTime()));
 			processTable1.addRow(tableRow);
 		}
-		
+		for (ProcessSim process : processesFromFileForCPU2) {
+			Vector<String> tableRow = new Vector<String>();
+			tableRow.add(String.valueOf(process.getArrivalTime()));
+			tableRow.add(process.getProcessName());
+			tableRow.add(String.valueOf(process.getServiceTime()));
+			processTable2.addRow(tableRow);
+		}
 		//create clock
 		systemClock = new ClockSim();
 		
@@ -110,23 +125,36 @@ public class Controller extends Thread {
 				systemClock.updateClock();
 				
 				//check process in the processes from file list to see if the have reached their arrival time
-				Iterator<ProcessSim> processIterator = processesFromFile.iterator();
-				while (processIterator.hasNext()) {
-					ProcessSim process = processIterator.next();
+				Iterator<ProcessSim> processIteratorForCPU1 = processesFromFileForCPU1.iterator();
+				while (processIteratorForCPU1.hasNext()) {
+					ProcessSim process = processIteratorForCPU1.next();
 					if ((process.getArrivalTime() * timeUnit) <= systemClock.getCurrentTime()) {
 						//set the actual arrival time and add it to the arrived processes list
 						process.setActualArrivalTime(systemClock.getCurrentTime());
-						arrivedProcesses.add(process);
+						arrivedProcessesForCPU1.add(process);
 						
 						//print a message in the gui and remove the process from the processes from file list
 						window.systemPrint(systemClock.getCurrentTime(), process.getProcessName() + " added to process queue.");
-						processIterator.remove();
+						processIteratorForCPU1.remove();
 					}
 				}
-				
+
+				Iterator<ProcessSim> processIteratorForCPU2 = processesFromFileForCPU2.iterator();
+				while (processIteratorForCPU2.hasNext()) {
+					ProcessSim process = processIteratorForCPU2.next();
+					if ((process.getArrivalTime() * timeUnit) <= systemClock.getCurrentTime()) {
+						//set the actual arrival time and add it to the arrived processes list
+						process.setActualArrivalTime(systemClock.getCurrentTime());
+						arrivedProcessesForCPU2.add(process);
+
+						//print a message in the gui and remove the process from the processes from file list
+						window.systemPrint(systemClock.getCurrentTime(), process.getProcessName() + " added to process queue.");
+						processIteratorForCPU2.remove();
+					}
+				}
 				//if there are processes in the arrived queue and cpu1 does not have a process,
 				//pass cpu1 a process and wake it if it is sleeping. Update the process queue table.
-				if (!arrivedProcesses.isEmpty()) {
+				if (!arrivedProcessesForCPU1.isEmpty()) {
 					if (cpu1.getCurrProcess() == null) {
 						ProcessSim process = HRRN();
 						cpu1.setCurrProcess(process);
@@ -135,27 +163,27 @@ public class Controller extends Thread {
 						}
 						window.systemPrint(systemClock.getCurrentTime(), process.getProcessName() + " loaded in cpu1.");
 
-						if (!processTable1.getDataVector().isEmpty()) {
-							processTable1.getDataVector().remove(0);
+						if (processTable1.getRowCount() > 0) {
+							processTable1.removeRow(0);
 						}
 					}
 				}
 				
 				//if there are processes in the arrived queue and cpu2 does not have a process,
 				//pass cpu2 a process and wake it if it is sleeping. Update the process queue table.
-				/*if (!arrivedProcesses.isEmpty()) {
+				if (!arrivedProcessesForCPU2.isEmpty()) {
 					if (cpu2.getCurrProcess() == null) {
-						cpu2.setCurrProcess(arrivedProcesses.peek());
+						cpu2.setCurrProcess(arrivedProcessesForCPU2.peek());
 						if (cpu2.getState().equals(Thread.State.TIMED_WAITING)) {
 							cpu2.interrupt();
 						}
-						window.systemPrint(systemClock.getCurrentTime(), arrivedProcesses.poll().getProcessName() + " loaded in cpu2.");
+						window.systemPrint(systemClock.getCurrentTime(), arrivedProcessesForCPU2.poll().getProcessName() + " loaded in cpu2.");
 
-						if (processTable1.getRowCount() > 0) {
-							processTable1.removeRow(0);
+						if (processTable2.getRowCount() > 0) {
+							processTable2.removeRow(0);
 						}
 					}
-				}*/
+				}
 				
 				//yielding where a loop can potentially do nothing forever prevents the
 				//thread from using all processing resources 
@@ -215,7 +243,7 @@ public class Controller extends Thread {
 					
 					//print message in gui and add process to finished process list
 					window.systemPrint(systemClock.getCurrentTime(), finishedProcess.getProcessName() + " finished in processor 1.");
-					finishedProcesses.add(finishedProcess);
+					finishedProcessesForCPU1.add(finishedProcess);
 				}
 			}
 			
@@ -242,11 +270,11 @@ public class Controller extends Thread {
 					tableRow.add(String.valueOf(Math.round((double)finishedProcess.getActualFinishTime() / (double)timeUnit)));
 					tableRow.add(String.valueOf(Math.round((double)finishedProcess.getTat() / (double)timeUnit)));
 					tableRow.add(formatter.format(finishedProcess.getNtat()));
-					statsTable1.addRow(tableRow);
+					statsTable2.addRow(tableRow);
 					
 					//print message in gui and add process to finished process list
 					window.systemPrint(systemClock.getCurrentTime(), finishedProcess.getProcessName() + " finished in processor 2.");
-					finishedProcesses.add(finishedProcess);
+					finishedProcessesForCPU2.add(finishedProcess);
 				}
 			}
 			
@@ -300,8 +328,8 @@ public class Controller extends Thread {
 	private ProcessSim HRRN() {
 		long currentTime = systemClock.getCurrentTime();
 		float responseRatio = 0.0f;
-		ProcessSim nextProcess = arrivedProcesses.peek();
-		for (ProcessSim process : arrivedProcesses){
+		ProcessSim nextProcess = arrivedProcessesForCPU1.peek();
+		for (ProcessSim process : arrivedProcessesForCPU1){
 			float waitingTime = currentTime - process.getArrivalTime() * timeUnit;
 			float temp;
 			temp = responseRatio;
@@ -310,7 +338,7 @@ public class Controller extends Thread {
 				nextProcess = process;
 			}
 		}
-		arrivedProcesses.remove(nextProcess);
+		arrivedProcessesForCPU1.remove(nextProcess);
 
 		return nextProcess;
 	}
