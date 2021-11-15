@@ -12,9 +12,9 @@ import javax.swing.JFileChooser;
  * of each line, and then adds the ProcessSim objects into a list for other classes to access.
  */
 public class ProcessParser {
-    ArrayList<ProcessSim> processQueue = new ArrayList<>();
+    private ArrayList<ProcessSim> processQueue = new ArrayList<>();
 
-    public void ProcessParse() {
+    private void ProcessParse() {
     	System.out.println("Please select input file.");
         String fileName = "";
     	JFileChooser fileChooser = new JFileChooser(System.getProperty("user.dir"));
@@ -50,10 +50,17 @@ public class ProcessParser {
         }
     }
 
-    // Create the list whenever another objects needs it
-    public ArrayList<ProcessSim> getProcessQueue()
+    // Create the list
+    public void makeProcessQueue()
     {
         ProcessParse();
-        return processQueue;
+    }
+    
+    // Retrieve the list
+    public ArrayList<ProcessSim> getProcessQueue()
+    {
+    	
+    	return processQueue;
+    	
     }
 }

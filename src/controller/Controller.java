@@ -70,11 +70,13 @@ public class Controller extends Thread {
 	public Controller() {
 		//create process queues
 		parse1 = new ProcessParser();
+		parse1.makeProcessQueue();
 		processesFromFileForCPU1 = parse1.getProcessQueue();
 		arrivedProcessesForCPU1 = new LinkedList<>();
 		finishedProcessesForCPU1 = new ArrayList<ProcessSim>();
 
 		parse2 = new ProcessParser();
+		parse2.makeProcessQueue();
 		processesFromFileForCPU2 = parse2.getProcessQueue();
 		arrivedProcessesForCPU2 = new LinkedList<>();
 		finishedProcessesForCPU2 = new ArrayList<ProcessSim>();
