@@ -16,6 +16,7 @@ public class CPU extends Thread {
 	private long currentServiceTime;
 	private long currentProcessServiceTime;
 	private long lastTimeUpdate = 0;
+	private long currentSliceTime;
 	private ClockSim systemClock;
 	private String currentProcessName;
 	private int timeUnit;
@@ -31,6 +32,7 @@ public class CPU extends Thread {
 		currentServiceTime = 0;
 		currentProcessName = "None";
 		currentProcessServiceTime = 0;
+		currentSliceTime = 0;
 		timeUnit = 100;
 		systemClock = clock;
 	}
@@ -50,7 +52,8 @@ public class CPU extends Thread {
 						//set time variables and set processing to true
 						currentProcessName = currProcess.getProcessName();
 						currentProcessServiceTime = currProcess.getServiceTime() * timeUnit;
-						currentServiceTime = 0;
+						currentServiceTime = currProcess.getActualServiceTime();
+						currentSliceTime = 0;
 						lastTimeUpdate = systemClock.getCurrentTime();
 						processing = true;
 					}
@@ -64,6 +67,7 @@ public class CPU extends Thread {
 					//create a temp time to subtract the old time from and add this to currentServiceTime. Set current process's service time to newly calculated temp time.
 					long temp = systemClock.getCurrentTime();
 					currentServiceTime = currentServiceTime + (temp - lastTimeUpdate);
+					currentSliceTime = currentSliceTime + (temp - lastTimeUpdate);
 					lastTimeUpdate = temp;
 					currProcess.setActualServiceTime(currentServiceTime);
 					if (currentServiceTime >= currentProcessServiceTime) {
@@ -119,6 +123,14 @@ public class CPU extends Thread {
 	public boolean getProcessing() {
 		return processing;
 	}
+	
+	/** 
+	 * Sets processing state of the processor.
+	 * @param b true or false
+	 */
+	public void setProcessing(boolean b) {
+		processing = b;
+	}
 
 	/**
 	 * Gets the current process name.
@@ -169,6 +181,14 @@ public class CPU extends Thread {
 	 */
 	public ProcessSim getCurrProcess() {
 		return currProcess;
+	}
+	
+	/**
+	 * Gets the time that the current process has been running during this slice.
+	 * @return
+	 */
+	public long getCurrentSliceTime() {
+		return currentSliceTime;
 	}
 	
 	/**

@@ -28,11 +28,10 @@ public class Controller extends Thread {
 	private CPU cpu1;
 	private CPU cpu2;
 	private GUI window;
-	private ProcessParser parse1;
+	private ProcessParser parse;
 	private ArrayList<ProcessSim> processesFromFileForCPU1;
 	private Queue<ProcessSim> arrivedProcessesForCPU1;
 	private ArrayList<ProcessSim> finishedProcessesForCPU1;
-	private ProcessParser parse2;
 	private ArrayList<ProcessSim> processesFromFileForCPU2;
 	private Queue<ProcessSim> arrivedProcessesForCPU2;
 	private ArrayList<ProcessSim> finishedProcessesForCPU2;
@@ -41,6 +40,7 @@ public class Controller extends Thread {
 	private DefaultTableModel processTable2;
 	private DefaultTableModel statsTable2;
 	private int timeUnit = 100;
+	private int timeSlice = 4;
 	private ClockSim systemClock;
 	private boolean running = false;
 	
@@ -69,15 +69,14 @@ public class Controller extends Thread {
 	 */
 	public Controller() {
 		//create process queues
-		parse1 = new ProcessParser();
-		parse1.makeProcessQueue();
-		processesFromFileForCPU1 = parse1.getProcessQueue();
+		parse = new ProcessParser();
+		parse.makeProcessQueue();
+		
+		processesFromFileForCPU1 = parse.getProcessQueue();
 		arrivedProcessesForCPU1 = new LinkedList<>();
 		finishedProcessesForCPU1 = new ArrayList<ProcessSim>();
 
-		parse2 = new ProcessParser();
-		parse2.makeProcessQueue();
-		processesFromFileForCPU2 = parse2.getProcessQueue();
+		processesFromFileForCPU2 = parse.getProcessQueue();
 		arrivedProcessesForCPU2 = new LinkedList<>();
 		finishedProcessesForCPU2 = new ArrayList<ProcessSim>();
 		
@@ -169,6 +168,19 @@ public class Controller extends Thread {
 							processTable1.removeRow(0);
 						}
 					}
+				}
+				
+				// (Round Robin implementation)
+				// If the process on CPU 2 has been running for the length of the time slice, move it to the back of the queue.
+				if (cpu2.getCurrProcess() != null && cpu2.getCurrentSliceTime() >= timeSlice * timeUnit && !arrivedProcessesForCPU2.isEmpty()) {
+					
+					// Remove the current process from the CPU, move it to the back of the queue and give the CPU the next process
+					ProcessSim moveProcess = cpu2.getCurrProcess();
+					arrivedProcessesForCPU2.add(moveProcess);
+					cpu2.setProcessing(false);
+					cpu2.setCurrProcess(arrivedProcessesForCPU2.peek());
+					window.systemPrint(systemClock.getCurrentTime(), moveProcess.getProcessName() + " exceeded time slice, " + arrivedProcessesForCPU2.poll().getProcessName() + " loaded in cpu2.");
+					
 				}
 				
 				//if there are processes in the arrived queue and cpu2 does not have a process,
@@ -344,4 +356,5 @@ public class Controller extends Thread {
 
 		return nextProcess;
 	}
+	
 }

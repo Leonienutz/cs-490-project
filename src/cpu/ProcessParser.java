@@ -60,7 +60,9 @@ public class ProcessParser {
     public ArrayList<ProcessSim> getProcessQueue()
     {
     	
-    	return processQueue;
+    	// Make a copy so the CPUs aren't manipulating the same list after we pass it
+    	ArrayList<ProcessSim> processQueueCopy = new ArrayList<>(processQueue);
+    	return processQueueCopy;
     	
     }
 }
