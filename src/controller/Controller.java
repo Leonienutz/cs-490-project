@@ -43,6 +43,10 @@ public class Controller extends Thread {
 	private int timeSlice = 4;
 	private ClockSim systemClock;
 	private boolean running = false;
+	private double totalNTAT1 = 0.00;
+	private double sumTotalNTAT1 = 0.00;
+	private double totalNTAT2 = 0.00;
+	private double sumTotalNTAT2 = 0.00;
 	
 	/**
 	 * Main function that runs the program
@@ -225,7 +229,6 @@ public class Controller extends Thread {
 				window.setCPUTextPane(cpu1.getCurrentProcessName(), cpu1.getCurrentProcessServiceTime() - cpu1.getCurrentServiceTime(), 1);
 				window.setCPUTextPane(cpu2.getCurrentProcessName(), cpu2.getCurrentProcessServiceTime() - cpu2.getCurrentServiceTime(), 2);
 				window.setSystemTime(systemClock.getCurrentTime());
-				//should change this to calculate current average nTAT for each processor
 				//window.setThroughputValue((double)statsTable1.getRowCount() / (double)Math.round((double)systemClock.getCurrentTime() / (double)timeUnit));
 			}
 			
@@ -258,6 +261,14 @@ public class Controller extends Thread {
 					//print message in gui and add process to finished process list
 					window.systemPrint(systemClock.getCurrentTime(), finishedProcess.getProcessName() + " finished in processor 1.");
 					finishedProcessesForCPU1.add(finishedProcess);
+					
+					// add all the nTAT values together for CPU1
+					totalNTAT1 = ((double)finishedProcess.getNtat());
+					sumTotalNTAT1 += totalNTAT1;
+					// constantly update the average nTAT value
+					for (int i = 0; i <= statsTable1.getRowCount(); i++) {
+						window.setNTAT1((double)sumTotalNTAT1/i);
+					}
 				}
 			}
 			
@@ -289,6 +300,14 @@ public class Controller extends Thread {
 					//print message in gui and add process to finished process list
 					window.systemPrint(systemClock.getCurrentTime(), finishedProcess.getProcessName() + " finished in processor 2.");
 					finishedProcessesForCPU2.add(finishedProcess);
+					
+					// add all the nTAT values together for CPU2
+					totalNTAT2 = ((double)finishedProcess.getNtat());
+					sumTotalNTAT2 += totalNTAT2;
+					// constantly update the average nTAT value
+					for (int i = 0; i <= statsTable2.getRowCount(); i++) {
+						window.setNTAT2((double)sumTotalNTAT2/i);
+					}
 				}
 			}
 			
