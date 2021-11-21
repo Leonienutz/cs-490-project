@@ -40,7 +40,7 @@ public class Controller extends Thread {
 	private DefaultTableModel processTable2;
 	private DefaultTableModel statsTable2;
 	private int timeUnit = 100;
-	private int timeSlice = 4;
+	private int timeSlice = 2;
 	private ClockSim systemClock;
 	private boolean running = false;
 	private double totalNTAT1 = 0.00;
@@ -139,7 +139,7 @@ public class Controller extends Thread {
 						arrivedProcessesForCPU1.add(process);
 						
 						//print a message in the gui and remove the process from the processes from file list
-						window.systemPrint(systemClock.getCurrentTime(), process.getProcessName() + " added to process queue.");
+						window.systemPrint(systemClock.getCurrentTime(), process.getProcessName() + " added to process queue for cpu1.");
 						processIteratorForCPU1.remove();
 					}
 				}
@@ -153,7 +153,7 @@ public class Controller extends Thread {
 						arrivedProcessesForCPU2.add(process);
 
 						//print a message in the gui and remove the process from the processes from file list
-						window.systemPrint(systemClock.getCurrentTime(), process.getProcessName() + " added to process queue.");
+						window.systemPrint(systemClock.getCurrentTime(), process.getProcessName() + " added to process queue for cpu2.");
 						processIteratorForCPU2.remove();
 					}
 				}
@@ -174,17 +174,14 @@ public class Controller extends Thread {
 					}
 				}
 				
-				// (Round Robin implementation)
-				// If the process on CPU 2 has been running for the length of the time slice, move it to the back of the queue.
-				if (cpu2.getCurrProcess() != null && cpu2.getCurrentSliceTime() >= timeSlice * timeUnit && !arrivedProcessesForCPU2.isEmpty()) {
+				// Round Robin: If the process on CPU 2 has been running for the length of the time slice, move it to the back of the queue.
+				if (!cpu2.isPreempting() && cpu2.getCurrProcess() != null && cpu2.getCurrentSliceTime() >= timeSlice * timeUnit && !arrivedProcessesForCPU2.isEmpty()) {
 					
-					// Remove the current process from the CPU, move it to the back of the queue and give the CPU the next process
+					// Copy the process on the CPU, signal the CPU that it needs to preempt, then add the preempted process back to the queue
 					ProcessSim moveProcess = cpu2.getCurrProcess();
+					cpu2.preempt(arrivedProcessesForCPU2.peek());
+					window.systemPrint(systemClock.getCurrentTime(), moveProcess.getProcessName() + " exceeded time slice, preempting with " + arrivedProcessesForCPU2.poll().getProcessName() + ".");
 					arrivedProcessesForCPU2.add(moveProcess);
-					cpu2.setProcessing(false);
-					cpu2.setCurrProcess(arrivedProcessesForCPU2.peek());
-					window.systemPrint(systemClock.getCurrentTime(), moveProcess.getProcessName() + " exceeded time slice, " + arrivedProcessesForCPU2.poll().getProcessName() + " loaded in cpu2.");
-					
 				}
 				
 				//if there are processes in the arrived queue and cpu2 does not have a process,

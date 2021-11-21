@@ -12,6 +12,7 @@ import controller.ClockSim;
 public class CPU extends Thread {
 	private boolean running;
 	private boolean processing;
+	private boolean preempting;
 	private ArrayList<ActionListener> actionListeners;
 	private long currentServiceTime;
 	private long currentProcessServiceTime;
@@ -21,6 +22,7 @@ public class CPU extends Thread {
 	private String currentProcessName;
 	private int timeUnit;
 	private ProcessSim currProcess;
+	private ProcessSim incProcess;
 	
 	/**
 	 * Constructor for the CPU.
@@ -45,8 +47,16 @@ public class CPU extends Thread {
 	public void run() {		
 		while (true) {
 			if (running) {
-				//System.out.println("test");
+				
+				// If we have an incoming preempt flag, handle it.
+				if (preempting) {
+					currProcess = incProcess;
+					incProcess = null;
+					preempting = false;
+				}
+				
 				if (!processing) {
+					
 					//if not processing something, check for processes
 					if (currProcess != null) {
 						//set time variables and set processing to true
@@ -62,28 +72,35 @@ public class CPU extends Thread {
 						//thread from using all processing resources 
 						Thread.yield();
 					}
+					
 				}
 				else {
-					//create a temp time to subtract the old time from and add this to currentServiceTime. Set current process's service time to newly calculated temp time.
-					long temp = systemClock.getCurrentTime();
-					currentServiceTime = currentServiceTime + (temp - lastTimeUpdate);
-					currentSliceTime = currentSliceTime + (temp - lastTimeUpdate);
-					lastTimeUpdate = temp;
-					currProcess.setActualServiceTime(currentServiceTime);
-					if (currentServiceTime >= currentProcessServiceTime) {
-						//once currentServiceTime reaches currentProcessServiceTime, it is finished. Process Queue is popped
-						processing = false;
-						currentProcessName = "None";
-						currProcess.setActualFinishTime(temp);
+					
+					if (currProcess != null) {
 						
-						//notify listeners that a process was finished
-						for (ActionListener listener : actionListeners) {
-							listener.actionPerformed(new ActionEvent(currProcess, 0, "finished"));
+						//create a temp time to subtract the old time from and add this to currentServiceTime. Set current process's service time to newly calculated temp time.
+						long temp = systemClock.getCurrentTime();
+						currentServiceTime = currentServiceTime + (temp - lastTimeUpdate);
+						currentSliceTime = currentSliceTime + (temp - lastTimeUpdate);
+						lastTimeUpdate = temp;
+						currProcess.setActualServiceTime(currentServiceTime);
+						if (currentServiceTime >= currentProcessServiceTime) {
+							//once currentServiceTime reaches currentProcessServiceTime, it is finished. Process Queue is popped
+							processing = false;
+							currentProcessName = "None";
+							currProcess.setActualFinishTime(temp);
+							
+							//notify listeners that a process was finished
+							for (ActionListener listener : actionListeners) {
+								listener.actionPerformed(new ActionEvent(currProcess, 0, "finished"));
+							}
+							
+							//set current process to null
+							currProcess = null;
 						}
-						
-						//set current process to null
-						currProcess = null;
+					
 					}
+					
 				}
 				//yielding where a loop can potentially do nothing forever prevents the
 				//thread from using all processing resources 
@@ -199,4 +216,26 @@ public class CPU extends Thread {
 	public void setTimeUnit(int ms) {
 		timeUnit = ms;
 	}
+	
+	
+	/**
+	 * Signals the CPU that it should preempt the current process with a new one.
+	 * @param Process to replace current process
+	 */
+	public void preempt(ProcessSim newProcess) {
+		
+		this.preempting = true;
+		this.processing = false;
+		this.incProcess = newProcess;
+		
+	}
+	
+	/**
+	 * Gets whether or not the CPU is already pending a preemption.
+	 * @return
+	 */
+	public boolean isPreempting() {
+		return preempting;
+	}
+
 }

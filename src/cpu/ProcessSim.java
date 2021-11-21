@@ -150,6 +150,17 @@ public class ProcessSim {
         return priority;
     }
     
+    /**
+     * Make copy of this process
+     * @return copy of process
+     */
+    public ProcessSim clone() {
+    	
+    	ProcessSim copy = new ProcessSim(this.arrivalTime, this.processName, this.serviceTime, this.priority);
+        return copy;
+        
+    }
+    
     
 }
 

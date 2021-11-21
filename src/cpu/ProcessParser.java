@@ -60,8 +60,11 @@ public class ProcessParser {
     public ArrayList<ProcessSim> getProcessQueue()
     {
     	
-    	// Make a copy so the CPUs aren't manipulating the same list after we pass it
-    	ArrayList<ProcessSim> processQueueCopy = new ArrayList<>(processQueue);
+    	// Make a deep copy so the CPUs aren't manipulating the same list after we pass it
+    	ArrayList<ProcessSim> processQueueCopy = new ArrayList<>();
+    	for (ProcessSim p : processQueue) {
+    		processQueueCopy.add(p.clone());
+    	}
     	return processQueueCopy;
     	
     }
