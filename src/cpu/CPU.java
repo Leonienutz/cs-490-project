@@ -13,6 +13,7 @@ public class CPU extends Thread {
 	private boolean running;
 	private boolean processing;
 	private boolean preempting;
+	private boolean finishing;
 	private ArrayList<ActionListener> actionListeners;
 	private long currentServiceTime;
 	private long currentProcessServiceTime;
@@ -23,6 +24,7 @@ public class CPU extends Thread {
 	private int timeUnit;
 	private ProcessSim currProcess;
 	private ProcessSim incProcess;
+	private ProcessSim incPreProcess;
 	
 	/**
 	 * Constructor for the CPU.
@@ -30,6 +32,8 @@ public class CPU extends Thread {
 	public CPU(ClockSim clock) {
 		running = false;
 		processing = false;
+		preempting = false;
+		finishing = false;
 		actionListeners = new ArrayList<ActionListener>();
 		currentServiceTime = 0;
 		currentProcessName = "None";
@@ -48,11 +52,17 @@ public class CPU extends Thread {
 		while (true) {
 			if (running) {
 				
-				// If we have an incoming preempt flag, handle it.
-				if (preempting) {
+				// If we have an incoming preempt or normal process switch, handle it.
+				if (preempting && incPreProcess != null) {
+					incProcess = incPreProcess;
+					incPreProcess = null;
+					preempting = false;
+				}
+				
+				if (incProcess != null) {
 					currProcess = incProcess;
 					incProcess = null;
-					preempting = false;
+					processing = false;
 				}
 				
 				if (!processing) {
@@ -86,7 +96,7 @@ public class CPU extends Thread {
 						currProcess.setActualServiceTime(currentServiceTime);
 						if (currentServiceTime >= currentProcessServiceTime) {
 							//once currentServiceTime reaches currentProcessServiceTime, it is finished. Process Queue is popped
-							processing = false;
+							finishing = true;
 							currentProcessName = "None";
 							currProcess.setActualFinishTime(temp);
 							
@@ -97,6 +107,8 @@ public class CPU extends Thread {
 							
 							//set current process to null
 							currProcess = null;
+							processing = false;
+							finishing = false;
 						}
 					
 					}
@@ -189,7 +201,7 @@ public class CPU extends Thread {
 	 * @param currProcess
 	 */
 	public void setCurrProcess(ProcessSim currProcess) {
-		this.currProcess = currProcess;
+		this.incProcess = currProcess;
 	}
 	
 	/**
@@ -226,7 +238,7 @@ public class CPU extends Thread {
 		
 		this.preempting = true;
 		this.processing = false;
-		this.incProcess = newProcess;
+		this.incPreProcess = newProcess;
 		
 	}
 	
@@ -236,6 +248,14 @@ public class CPU extends Thread {
 	 */
 	public boolean isPreempting() {
 		return preempting;
+	}
+	
+	/**
+	 * Gets whether the CPU is currently finishing a process
+	 * @return finishing true or false
+	 */
+	public boolean isFinishing() {
+		return finishing;
 	}
 
 }

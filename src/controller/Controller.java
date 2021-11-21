@@ -128,6 +128,7 @@ public class Controller extends Thread {
 			if (running) {
 				//update system clock
 				systemClock.updateClock();
+				//if (cpu2.getCurrProcess() == null && !arrivedProcessesForCPU2.isEmpty()) window.systemPrint(systemClock.getCurrentTime(), " ========== CPU2 PROCESS NULL");
 				
 				//check process in the processes from file list to see if the have reached their arrival time
 				Iterator<ProcessSim> processIteratorForCPU1 = processesFromFileForCPU1.iterator();
@@ -174,29 +175,40 @@ public class Controller extends Thread {
 					}
 				}
 				
-				// Round Robin: If the process on CPU 2 has been running for the length of the time slice, move it to the back of the queue.
-				if (!cpu2.isPreempting() && cpu2.getCurrProcess() != null && cpu2.getCurrentSliceTime() >= timeSlice * timeUnit && !arrivedProcessesForCPU2.isEmpty()) {
-					
-					// Copy the process on the CPU, signal the CPU that it needs to preempt, then add the preempted process back to the queue
-					ProcessSim moveProcess = cpu2.getCurrProcess();
-					cpu2.preempt(arrivedProcessesForCPU2.peek());
-					window.systemPrint(systemClock.getCurrentTime(), moveProcess.getProcessName() + " exceeded time slice, preempting with " + arrivedProcessesForCPU2.poll().getProcessName() + ".");
-					arrivedProcessesForCPU2.add(moveProcess);
-				}
-				
 				//if there are processes in the arrived queue and cpu2 does not have a process,
 				//pass cpu2 a process and wake it if it is sleeping. Update the process queue table.
 				if (!arrivedProcessesForCPU2.isEmpty()) {
-					if (cpu2.getCurrProcess() == null) {
-						cpu2.setCurrProcess(arrivedProcessesForCPU2.peek());
-						if (cpu2.getState().equals(Thread.State.TIMED_WAITING)) {
-							cpu2.interrupt();
+					if (cpu2.getCurrProcess() == null  && !cpu2.isPreempting() && !cpu2.getProcessing()) {
+						
+						if (!cpu2.isFinishing()) {
+							cpu2.setCurrProcess(arrivedProcessesForCPU2.peek());
+							if (cpu2.getState().equals(Thread.State.TIMED_WAITING)) {
+								cpu2.interrupt();
+							}
+							window.systemPrint(systemClock.getCurrentTime(), arrivedProcessesForCPU2.poll().getProcessName() + " loaded in cpu2.");
+							
+							if (processTable2.getRowCount() > 0) {
+								processTable2.removeRow(0);
+							}
 						}
-						window.systemPrint(systemClock.getCurrentTime(), arrivedProcessesForCPU2.poll().getProcessName() + " loaded in cpu2.");
-
-						if (processTable2.getRowCount() > 0) {
-							processTable2.removeRow(0);
+						
+					} else {
+						
+						// Round Robin: If the process on CPU 2 has been running for the length of the time slice, move it to the back of the queue.
+						if (cpu2.getCurrProcess() != null && cpu2.getProcessing() && !cpu2.isPreempting() && cpu2.getCurrentSliceTime() >= timeSlice * timeUnit) {
+							
+							// Copy the process on the CPU, signal the CPU that it needs to preempt, then add the preempted process back to the queue
+							ProcessSim moveProcess = cpu2.getCurrProcess();
+							cpu2.preempt(arrivedProcessesForCPU2.peek());
+							window.systemPrint(systemClock.getCurrentTime(), moveProcess.getProcessName() + " exceeded time slice, preempting with " + arrivedProcessesForCPU2.poll().getProcessName() + ".");
+							if (!cpu2.isFinishing()) arrivedProcessesForCPU2.add(moveProcess); // Double-check the process hasn't finished while we've been preempting it
+							
+							if (processTable2.getRowCount() > 0) {
+								processTable2.removeRow(0);
+							}
+							
 						}
+						
 					}
 				}
 				
