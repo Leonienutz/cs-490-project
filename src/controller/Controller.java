@@ -331,6 +331,7 @@ public class Controller extends Thread {
 				//and get the time unit from the gui
 				if (!running) {
 					timeUnit = window.getTimeUnit();
+					timeSlice = window.getRoundRobinLength();
 					window.setTimeUnit(timeUnit);
 					cpu1.setTimeUnit(timeUnit);
 					cpu2.setTimeUnit(timeUnit);
